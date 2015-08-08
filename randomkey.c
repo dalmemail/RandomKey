@@ -19,9 +19,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
 
-/* VERSION 0.2 */
-#define VERSION "0.2"
+/* VERSION 0.3 */
+#define VERSION "0.3"
+
+int filekey(int n_bytes, char *path)
+{
+	int fd;
+	if ((fd = open(path, O_WRONLY)) < 0) {
+		printf("Error: Al abrir %s\n", path);
+		return -1;
+	}
+	char key[n_bytes];
+	srand(time(NULL));
+	int i;
+	for (i = 0; i < n_bytes; i++) {
+		key[i] = rand() % 126 + 33;
+	}
+	write(fd, key, n_bytes);
+	close(fd);
+	return 0;
+}
 
 void makekey(int n_bytes)
 {
@@ -57,13 +77,14 @@ int checkarg(char *arg)
 int main(int argc, char **argv)
 {
 	int ret = EXIT_SUCCESS;
-	if (argc != 2) {
+	if (argc != 2 && argc != 3) {
 		printf("Uso: %s numero_de_bytes\n", argv[0]);
 	}
 	else {
 		if ((strcmp(argv[1], "--help")) == 0) {
 			printf("RandomKey %s\n", VERSION);
 			printf("Uso: %s numero_de_bytes\n", argv[0]);
+			printf("Uso: %s numero_de_bytes archivo.txt\n", argv[0]);
 			printf("Contacto: dalmemail@amaya.tk\n");
 		}
 		else {
@@ -72,7 +93,12 @@ int main(int argc, char **argv)
 				ret = EXIT_FAILURE;
 			}
 			else {
-				makekey(atoi(argv[1]));
+				if (argv[2]) {
+					ret = filekey(atoi(argv[1]), argv[2]);
+				}
+				else {
+					makekey(atoi(argv[1]));
+				}
 			}
 		}
 	}
